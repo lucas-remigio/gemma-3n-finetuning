@@ -104,7 +104,14 @@ def format_sample(example):
 # Map to text field
 print("[9] Applying chat template to dataset...")
 try:
-    ds = ds.map(lambda ex: {"text": format_sample(ex)}, remove_columns=ds.column_names)
+    def format_with_images(ex):
+        formatted_text = format_sample(ex)
+        return {
+            "text": formatted_text,
+            "images": None  # Add empty images field for VLM compatibility
+        }
+    
+    ds = ds.map(format_with_images, remove_columns=ds.column_names)
     print(f"    ✓ Dataset formatted successfully")
     print(f"    New columns: {ds.column_names}")
     # Show a sample of formatted text
@@ -126,9 +133,10 @@ training_args = TrainingArguments(
     warmup_ratio=0.03,
     logging_steps=10,
     save_steps=200,
-    bf16=False, fp16=True,             # MPS: fp16 training
+    bf16=False, fp16=False,              # Disable fp16 for MPS compatibility
     optim="adamw_torch",
     report_to="none",
+    remove_unused_columns=False,
 )
 print(f"    ✓ Training arguments configured")
 print(f"    Batch size: {training_args.per_device_train_batch_size}")
@@ -142,8 +150,6 @@ try:
         model=model,
         peft_config=lora_cfg,
         train_dataset=ds,
-        max_seq_length=2048,     # reduce if you hit memory limits
-        packing=False,           # simpler; can enable later
         args=training_args,
         formatting_func=lambda example: example["text"],
     )
