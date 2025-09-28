@@ -9,7 +9,7 @@ model_name = "google/gemma-3n-E2B-it"       # change to E2B-it if you prefer
 
 # Cap per-device memory and allow offload (key to avoiding the 10+ GiB warm-up)
 max_memory = {
-    "mps": "8GiB",   # adjust: 8–12GiB depending on your Mac
+    "mps": "8GiB",   # adjust: 8-12GiB depending on your Mac
     "cpu": "48GiB",   # plenty of CPU RAM for offload buffers
 }
 
@@ -23,8 +23,10 @@ model = AutoModelForCausalLM.from_pretrained(
     offload_state_dict=True,
     dtype=torch.float16,
     trust_remote_code=True,
+    local_files_only=True, 
 )
 print(f"[1] Model loaded in {time.perf_counter()-t0:.1f}s")
+# Check placement of layers
 print("Device map:", getattr(model, "hf_device_map", None))
 
 print("[2] Loading tokenizer …")
@@ -39,7 +41,7 @@ model.config.attn_implementation = "sdpa"   # fastest on MPS typically
 
 messages = [
     {"role":"system","content":"You are a helpful assistant."},
-    {"role":"user","content":"Hello Gemma, how are you?"}
+    {"role":"user","content":"Hello Gemma, how are you? What do you think of the portuguese culture?"}
 ]
 
 print("[3] Building inputs …")
@@ -51,9 +53,11 @@ model.eval()
 with torch.inference_mode():
     out = model.generate(
         inputs,
-        max_new_tokens=64,    # start small
-        do_sample=False,      # greedy = faster & deterministic
-        use_cache=True,
+        max_new_tokens=256,    # start small
+        do_sample=True,      # True = slower, more creative, False = greedy
+        use_cache=True,     # important for performance
+        temperature=0.7,   
+        top_p=0.9,          # nucleus sampling
     )
 
 print(tok.decode(out[0], skip_special_tokens=True))
