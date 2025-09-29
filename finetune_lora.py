@@ -1,6 +1,7 @@
 import os, json
 from dataclasses import dataclass
 from typing import Dict, List
+import numpy as np
 import torch
 from datasets import load_dataset
 from transformers import (
@@ -9,11 +10,12 @@ from transformers import (
 )
 from trl import SFTTrainer
 from peft import LoraConfig, prepare_model_for_kbit_training
+import PIL.Image
 
 # --- Config ---
 MODEL_NAME = "google/gemma-3n-E2B-it"  # start smaller; swap to E4B later
-DATA_PATH  = "health_train.jsonl"
-OUTPUT_DIR = "outputs/gemma3n_e2b_health_lora"
+DATA_PATH  = "train.jsonl"
+OUTPUT_DIR = "outputs/lora"
 MPS_GB     = "8GiB"  # adjust to your Mac
 # ---------------
 
@@ -104,14 +106,11 @@ def format_sample(example):
 # Map to text field
 print("[9] Applying chat template to dataset...")
 try:
-    def format_with_images(ex):
+    def format_text_only(ex):
         formatted_text = format_sample(ex)
-        return {
-            "text": formatted_text,
-            "images": None  # Add empty images field for VLM compatibility
-        }
+        return {"text": formatted_text}
     
-    ds = ds.map(format_with_images, remove_columns=ds.column_names)
+    ds = ds.map(format_text_only, remove_columns=ds.column_names)
     print(f"    ✓ Dataset formatted successfully")
     print(f"    New columns: {ds.column_names}")
     # Show a sample of formatted text
