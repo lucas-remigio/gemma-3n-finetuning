@@ -96,5 +96,3 @@ Perfect for:
 - Small-scale fine-tuning experiments
 
 Built for macOS developers who want to fine-tune LLMs locally without cloud dependencies.
-
-python3.11 model.py
