@@ -16,7 +16,7 @@ import PIL.Image
 MODEL_NAME = "google/gemma-3n-E2B-it"  # start smaller; swap to E4B later
 DATA_PATH  = "train.jsonl"
 OUTPUT_DIR = "outputs/lora"
-MPS_GB     = "8GiB"  # adjust to your Mac
+MPS_GB     = "10GiB"  # adjust to your Mac
 # ---------------
 
 print("[0] Starting LoRA fine-tuning script")
@@ -40,13 +40,13 @@ print(f"    Memory config: {max_memory}")
 
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_NAME,
-    device_map="auto",
+    device_map="cpu",  
     max_memory=max_memory,
     low_cpu_mem_usage=True,
     offload_folder="./offload",
     offload_state_dict=True,
     trust_remote_code=True,
-    dtype=torch.float16,
+    dtype=torch.float32,
 )
 print(f"    ✓ Model loaded successfully")
 print(f"    Device map: {getattr(model, 'hf_device_map', 'Not available')}")
@@ -63,16 +63,20 @@ print(f"    ✓ Resized embeddings: {original_size} → {new_size}")
 
 # LoRA config - lightweight & safe for MPS
 print("[5] Setting up LoRA configuration...")
+
+normalTargetModules = [
+    "q_proj","k_proj","v_proj","o_proj",
+    "up_proj","down_proj","gate_proj",
+]
+simplestTargetModules = [
+    "q_proj", "v_proj",  # Only attention, skip MLP
+]
 lora_cfg = LoraConfig(
-    r=16,
-    lora_alpha=32,
-    lora_dropout=0.05,
+    r=8, # ideal would be 16
+    lora_alpha=16, # ideal would be 32
+    lora_dropout=0.1, # ideal would be 0.05
     bias="none",
-    target_modules=[
-        # cover common proj layers in Gemma/LLaMA-like blocks
-        "q_proj","k_proj","v_proj","o_proj",
-        "up_proj","down_proj","gate_proj",
-    ]
+    target_modules=simplestTargetModules
 )
 print(f"    ✓ LoRA config created: r={lora_cfg.r}, alpha={lora_cfg.lora_alpha}")
 print(f"    Target modules: {lora_cfg.target_modules}")
@@ -125,17 +129,20 @@ print("[10] Setting up training arguments...")
 training_args = TrainingArguments(
     output_dir=OUTPUT_DIR,
     per_device_train_batch_size=1,     # tiny batch on MPS
-    gradient_accumulation_steps=8,     # simulate bigger batch
-    learning_rate=2e-4,
-    num_train_epochs=3,
+    gradient_accumulation_steps=4,     # ideal would be 8, but 4 safer for MPS
+    learning_rate=5e-4,            # ideal would be 2e-4, but 5e-4 safer for MPS
+    num_train_epochs=1,
     lr_scheduler_type="cosine",
     warmup_ratio=0.03,
-    logging_steps=10,
+    logging_steps=1, # frequent logging
     save_steps=200,
-    bf16=False, fp16=False,              # Disable fp16 for MPS compatibility
+    bf16=False, 
+    fp16=False,              # Disable fp16 for MPS compatibility
     optim="adamw_torch",
     report_to="none",
     remove_unused_columns=False,
+    dataloader_num_workers=0,          # Single-threaded
+    dataloader_pin_memory=False,       # Disable for MPS
 )
 print(f"    ✓ Training arguments configured")
 print(f"    Batch size: {training_args.per_device_train_batch_size}")
