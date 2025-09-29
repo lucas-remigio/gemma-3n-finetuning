@@ -147,10 +147,10 @@ print("[11] Creating SFTTrainer...")
 try:
     trainer = SFTTrainer(
         model=model,
-        peft_config=lora_cfg,
-        train_dataset=ds,
         args=training_args,
-        formatting_func=lambda example: example["text"],
+        train_dataset=ds,
+        processing_class=tok,
+        peft_config=lora_cfg,
     )
     print(f"    ✓ SFTTrainer created successfully")
 except Exception as e:
