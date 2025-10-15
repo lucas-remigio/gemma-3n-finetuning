@@ -12,7 +12,7 @@
     "conf_num_hidden_layers": 12,
     "conf_reduction_factor": 4,
     "conf_residual_weight": 0.5,
-    "dtype": "float32",
+    "dtype": "float16",
     "gradient_clipping": 10000000000.0,
     "hidden_size": 1536,
     "input_feat_size": 128,
@@ -50,7 +50,7 @@
   "audio_token_id": 262273,
   "boa_token_id": 256000,
   "boi_token_id": 255999,
-  "dtype": "float32",
+  "dtype": "float16",
   "eoa_token_id": 262272,
   "eoi_token_id": 262144,
   "eos_token_id": [
@@ -99,7 +99,7 @@
     "altup_num_inputs": 4,
     "attention_bias": false,
     "attention_dropout": 0.0,
-    "dtype": "float32",
+    "dtype": "float16",
     "final_logit_softcapping": 30.0,
     "head_dim": 256,
     "hidden_activation": "gelu_pytorch_tanh",
@@ -190,7 +190,7 @@
   "vision_config": {
     "architecture": "mobilenetv5_300m_enc",
     "do_pooling": false,
-    "dtype": "float32",
+    "dtype": "float16",
     "hidden_size": 2048,
     "initializer_range": 0.02,
     "label_names": [
