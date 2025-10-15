@@ -82,4 +82,4 @@ tmp/
 # offloads
 lora_offload/*
 outputs/finalized_models/*
-offload_model/*
+offload_cache/*
