@@ -1,6 +1,4 @@
 {
-  "audio_token": "<audio_soft_token>",
-  "boa_token": "<start_of_audio>",
   "boi_token": "<start_of_image>",
   "bos_token": {
     "content": "<bos>",
@@ -9,7 +7,6 @@
     "rstrip": false,
     "single_word": false
   },
-  "eoa_token": "<end_of_audio>",
   "eoi_token": "<end_of_image>",
   "eos_token": {
     "content": "<eos>",
